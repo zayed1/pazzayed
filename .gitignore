@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+index/
+data/*.pdf
+data/*.csv
+!data/.gitkeep
