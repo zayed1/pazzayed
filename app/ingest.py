@@ -5,9 +5,12 @@ import re
 from dataclasses import dataclass, asdict
 from pathlib import Path
 
+from openpyxl import load_workbook
 from pypdf import PdfReader
 
 from .config import settings
+
+SUPPORTED_SUFFIXES = {".pdf", ".csv", ".xlsx"}
 
 
 @dataclass
@@ -94,6 +97,30 @@ def _read_csv(path: Path) -> list[tuple[str, str]]:
     return rows
 
 
+def _read_xlsx(path: Path) -> list[tuple[str, str]]:
+    """Each row of every sheet becomes a 'col: value' text block."""
+    wb = load_workbook(str(path), read_only=True, data_only=True)
+    rows: list[tuple[str, str]] = []
+    for ws in wb.worksheets:
+        iterator = ws.iter_rows(values_only=True)
+        try:
+            header = next(iterator)
+        except StopIteration:
+            continue
+        headers = [str(h).strip() if h is not None else f"عمود{i+1}" for i, h in enumerate(header)]
+        sheet_tag = f"{ws.title}!" if len(wb.worksheets) > 1 else ""
+        for i, row in enumerate(iterator, start=2):
+            parts = [
+                f"{headers[j]}: {val}"
+                for j, val in enumerate(row)
+                if j < len(headers) and val is not None and str(val).strip()
+            ]
+            if parts:
+                rows.append(("\n".join(parts), f"{sheet_tag}صف {i}"))
+    wb.close()
+    return rows
+
+
 def load_chunks(data_dir: Path | None = None) -> list[Chunk]:
     data_dir = data_dir or settings.data_dir
     chunks: list[Chunk] = []
@@ -101,13 +128,16 @@ def load_chunks(data_dir: Path | None = None) -> list[Chunk]:
 
     files = sorted(
         p for p in data_dir.rglob("*")
-        if p.is_file() and p.suffix.lower() in {".pdf", ".csv"}
+        if p.is_file() and p.suffix.lower() in SUPPORTED_SUFFIXES
     )
 
     for path in files:
         name = path.name
-        if path.suffix.lower() == ".pdf":
+        suffix = path.suffix.lower()
+        if suffix == ".pdf":
             segments = _read_pdf(path)
+        elif suffix == ".xlsx":
+            segments = _read_xlsx(path)
         else:
             segments = _read_csv(path)
 

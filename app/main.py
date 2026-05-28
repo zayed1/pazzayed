@@ -8,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from .config import settings, BASE_DIR
+from .ingest import SUPPORTED_SUFFIXES
 from .vectorstore import Index, build_index
 from . import rag, llm
 
@@ -41,7 +42,7 @@ class AskRequest(BaseModel):
 def status():
     data_files = [
         p.name for p in settings.data_dir.rglob("*")
-        if p.is_file() and p.suffix.lower() in {".pdf", ".csv"}
+        if p.is_file() and p.suffix.lower() in SUPPORTED_SUFFIXES
     ]
     index_built = (settings.index_dir / "store.pkl").exists()
     return {
@@ -66,8 +67,8 @@ def rebuild():
 @app.post("/api/upload")
 async def upload(file: UploadFile = File(...)):
     suffix = Path(file.filename or "").suffix.lower()
-    if suffix not in {".pdf", ".csv"}:
-        raise HTTPException(status_code=400, detail="يُسمح فقط بملفات PDF أو CSV.")
+    if suffix not in SUPPORTED_SUFFIXES:
+        raise HTTPException(status_code=400, detail="يُسمح فقط بملفات PDF أو CSV أو XLSX.")
     settings.data_dir.mkdir(parents=True, exist_ok=True)
     dest = settings.data_dir / Path(file.filename).name
     dest.write_bytes(await file.read())
