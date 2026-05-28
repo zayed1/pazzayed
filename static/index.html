@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>قارئ الكتب الذكي</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>📚 قارئ الكتب الذكي</h1>
+      <p class="sub">اسأل عن أي معلومة وسأبحث عنها داخل كتبك ومصادرك.</p>
+      <div id="status" class="status"></div>
+    </header>
+
+    <section class="toolbar">
+      <input type="file" id="fileInput" accept=".pdf,.csv" />
+      <button id="uploadBtn">رفع ملف</button>
+      <button id="rebuildBtn">إعادة بناء الفهرس</button>
+    </section>
+
+    <main id="chat" class="chat"></main>
+
+    <form id="askForm" class="ask">
+      <input
+        type="text"
+        id="question"
+        placeholder="اكتب سؤالك هنا…"
+        autocomplete="off"
+        required
+      />
+      <button type="submit">اسأل</button>
+    </form>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
